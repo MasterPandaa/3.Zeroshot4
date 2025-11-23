@@ -1,6 +1,7 @@
-import sys
 import math
 import random
+import sys
+
 import pygame
 
 # Game constants
@@ -70,6 +71,7 @@ MAZE_LAYOUT = [
 # Convert '0' paths to dotted paths '2' except special tiles
 # Place power pellets at the four outer corners of the inner maze
 
+
 def prepare_maze(layout):
     grid = [list(row) for row in layout]
     rows = len(grid)
@@ -77,25 +79,27 @@ def prepare_maze(layout):
     # Fill paths with dots
     for r in range(rows):
         for c in range(cols):
-            if grid[r][c] == '0':
-                grid[r][c] = '2'
+            if grid[r][c] == "0":
+                grid[r][c] = "2"
     # Ensure power pellets exist in four corners of walkable area
     candidates = [(1, 1), (1, cols - 2), (rows - 2, 1), (rows - 2, cols - 2)]
     placed = 0
     for rr, cc in candidates:
-        if grid[rr][cc] != '1':
-            grid[rr][cc] = '3'
+        if grid[rr][cc] != "1":
+            grid[rr][cc] = "3"
             placed += 1
     # If there is a ghost base 'B', keep it empty path (no dots)
     for r in range(rows):
         for c in range(cols):
-            if grid[r][c] == 'B':
-                grid[r][c] = '0'
+            if grid[r][c] == "B":
+                grid[r][c] = "0"
     return grid
+
 
 GRID = prepare_maze(MAZE_LAYOUT)
 
 # Helpers
+
 
 def grid_to_pixel(c, r):
     return c * TILE_SIZE + TILE_SIZE // 2, r * TILE_SIZE + TILE_SIZE // 2
@@ -107,13 +111,13 @@ def pixel_to_grid(x, y):
 
 def is_wall(c, r):
     if 0 <= r < ROWS and 0 <= c < COLS:
-        return GRID[r][c] == '1'
+        return GRID[r][c] == "1"
     return True
 
 
 def is_walkable(c, r):
     if 0 <= r < ROWS and 0 <= c < COLS:
-        return GRID[r][c] != '1'
+        return GRID[r][c] != "1"
     return False
 
 
@@ -124,13 +128,14 @@ def find_ghost_base():
     for radius in range(1, 6):
         for r in range(center_r - radius, center_r + radius + 1):
             for c in range(center_c - radius, center_c + radius + 1):
-                if 0 <= r < ROWS and 0 <= c < COLS and GRID[r][c] != '1':
+                if 0 <= r < ROWS and 0 <= c < COLS and GRID[r][c] != "1":
                     return c, r
     return 1, 1
 
 
 PACMAN_START = (1, 1)
 GHOST_BASE = find_ghost_base()
+
 
 class Pacman:
     def __init__(self):
@@ -167,7 +172,8 @@ class Pacman:
         # Attempt to change direction if possible (only when aligned sufficiently)
         if self.next_dir != self.dir:
             if abs(self.x - center_x) < 0.5 and abs(self.y - center_y) < 0.5:
-                nxc, nyc = target_c + self.next_dir[0], target_r + self.next_dir[1]
+                nxc, nyc = target_c + \
+                    self.next_dir[0], target_r + self.next_dir[1]
                 if is_walkable(nxc, nyc):
                     self.dir = self.next_dir
 
@@ -190,7 +196,8 @@ class Pacman:
         self.grid_c, self.grid_r = pixel_to_grid(int(self.x), int(self.y))
 
     def draw(self, surface):
-        pygame.draw.circle(surface, YELLOW, (int(self.x), int(self.y)), self.radius)
+        pygame.draw.circle(
+            surface, YELLOW, (int(self.x), int(self.y)), self.radius)
 
     def reset(self):
         self.grid_c, self.grid_r = PACMAN_START
@@ -198,6 +205,7 @@ class Pacman:
         self.dir = (0, 0)
         self.next_dir = (0, 0)
         self.alive = True
+
 
 class Ghost:
     def __init__(self, color, start_cell, name="ghost"):
@@ -207,7 +215,7 @@ class Ghost:
         self.x, self.y = grid_to_pixel(self.grid_c, self.grid_r)
         self.radius = TILE_SIZE // 2 - 3
         self.speed = 1.6
-        self.dir = random.choice([(1,0), (-1,0), (0,1), (0,-1)])
+        self.dir = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
         self.vulnerable = False
         self.vulnerable_timer = 0.0
         self.flash = False
@@ -239,7 +247,7 @@ class Ghost:
         if aligned:
             self.x, self.y = center_x, center_y
             choices = []
-            for d in [(1,0), (-1,0), (0,1), (0,-1)]:
+            for d in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
                 # avoid reversing unless no other option
                 if (-d[0], -d[1]) == self.dir:
                     continue
@@ -257,6 +265,7 @@ class Ghost:
                 def dist_after(d):
                     nc, nr = c + d[0], r + d[1]
                     return (nc - pc) ** 2 + (nr - pr) ** 2
+
                 if self.vulnerable:
                     # maximize distance
                     self.dir = max(choices, key=dist_after)
@@ -282,19 +291,27 @@ class Ghost:
             color = VULNERABLE_FLASH if self.flash else VULNERABLE_BLUE
         else:
             color = self.color
-        pygame.draw.circle(surface, color, (int(self.x), int(self.y)), self.radius)
+        pygame.draw.circle(
+            surface, color, (int(self.x), int(self.y)), self.radius)
         # eyes (simple)
         eye_offset = 4
-        pygame.draw.circle(surface, WHITE, (int(self.x - eye_offset), int(self.y - eye_offset)), 3)
-        pygame.draw.circle(surface, WHITE, (int(self.x + eye_offset), int(self.y - eye_offset)), 3)
+        pygame.draw.circle(
+            surface, WHITE, (int(self.x - eye_offset),
+                             int(self.y - eye_offset)), 3
+        )
+        pygame.draw.circle(
+            surface, WHITE, (int(self.x + eye_offset),
+                             int(self.y - eye_offset)), 3
+        )
 
     def reset_to_base(self, base_cell):
         self.grid_c, self.grid_r = base_cell
         self.x, self.y = grid_to_pixel(self.grid_c, self.grid_r)
-        self.dir = random.choice([(1,0), (-1,0), (0,1), (0,-1)])
+        self.dir = random.choice([(1, 0), (-1, 0), (0, 1), (0, -1)])
         self.vulnerable = False
         self.flash = False
         self.vulnerable_timer = 0.0
+
 
 class Game:
     def __init__(self):
@@ -302,8 +319,8 @@ class Game:
         pygame.display.set_caption("Pacman - Python/Pygame")
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont('arial', 20)
-        self.big_font = pygame.font.SysFont('arial', 48, bold=True)
+        self.font = pygame.font.SysFont("arial", 20)
+        self.big_font = pygame.font.SysFont("arial", 48, bold=True)
         # Regenerate the GRID so dots/power-pellets reset on a fresh game
         global GRID
         GRID = prepare_maze(MAZE_LAYOUT)
@@ -351,11 +368,11 @@ class Game:
 
         # Eat dots/power dots
         c, r = self.pacman.grid_c, self.pacman.grid_r
-        if GRID[r][c] == '2':
-            GRID[r][c] = '0'
+        if GRID[r][c] == "2":
+            GRID[r][c] = "0"
             self.score += DOT_SCORE
-        elif GRID[r][c] == '3':
-            GRID[r][c] = '0'
+        elif GRID[r][c] == "3":
+            GRID[r][c] = "0"
             self.score += POWER_DOT_SCORE
             for g in self.ghosts:
                 g.set_vulnerable()
@@ -380,7 +397,7 @@ class Game:
                     return
 
         # Win condition: no more dots/power dots
-        if not any('2' in row or '3' in row for row in GRID):
+        if not any("2" in row or "3" in row for row in GRID):
             self.win = True
 
     @staticmethod
@@ -398,17 +415,25 @@ class Game:
                 tile = GRID[r][c]
                 x = c * TILE_SIZE
                 y = r * TILE_SIZE
-                if tile == '1':
-                    pygame.draw.rect(surface, BLUE, (x, y, TILE_SIZE, TILE_SIZE))
+                if tile == "1":
+                    pygame.draw.rect(
+                        surface, BLUE, (x, y, TILE_SIZE, TILE_SIZE))
                 else:
                     # Path background
-                    pygame.draw.rect(surface, BLACK, (x, y, TILE_SIZE, TILE_SIZE))
-                    if tile == '2':
+                    pygame.draw.rect(
+                        surface, BLACK, (x, y, TILE_SIZE, TILE_SIZE))
+                    if tile == "2":
                         # Dot
-                        pygame.draw.circle(surface, WHITE, (x + TILE_SIZE // 2, y + TILE_SIZE // 2), 2)
-                    elif tile == '3':
+                        pygame.draw.circle(
+                            surface, WHITE, (x + TILE_SIZE //
+                                             2, y + TILE_SIZE // 2), 2
+                        )
+                    elif tile == "3":
                         # Power pellet
-                        pygame.draw.circle(surface, WHITE, (x + TILE_SIZE // 2, y + TILE_SIZE // 2), 5)
+                        pygame.draw.circle(
+                            surface, WHITE, (x + TILE_SIZE //
+                                             2, y + TILE_SIZE // 2), 5
+                        )
 
     def draw_hud(self, surface):
         score_surf = self.font.render(f"Score: {self.score}", True, WHITE)
@@ -421,9 +446,12 @@ class Game:
             text = self.big_font.render("GAME OVER", True, WHITE)
         else:
             text = self.big_font.render("YOU WIN!", True, WHITE)
-        sub = self.font.render("Press Enter to Restart or Esc to Quit", True, GREY)
-        surface.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 40))
-        surface.blit(sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 2 + 20))
+        sub = self.font.render(
+            "Press Enter to Restart or Esc to Quit", True, GREY)
+        surface.blit(
+            text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - 40))
+        surface.blit(
+            sub, (WIDTH // 2 - sub.get_width() // 2, HEIGHT // 2 + 20))
 
     def draw(self):
         self.screen.fill(BLACK)
